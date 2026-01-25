@@ -1,0 +1,1748 @@
+{
+    "info": {
+        "_postman_id": "farmagent-api-collection",
+        "name": "FarmAgent API (JSON:API)",
+        "description": "FarmAgent API collection with JSON:API format - all requests go through the API Gateway at localhost:8000.\n\nResponses follow JSON:API v1.1 spec with:\n- Content-Type: application/vnd.api+json\n- data/errors/meta top-level\n- Resources with type/id/attributes",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:8000/api/v1",
+            "type": "string"
+        },
+        {
+            "key": "accessToken",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "refreshToken",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "userId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "fieldId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "cropId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "resetCode",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "verificationCode",
+            "value": "",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Auth",
+            "item": [
+                {
+                    "name": "Register",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "var jsonData = pm.response.json();",
+                                    "if (jsonData.tokens) {",
+                                    "    pm.collectionVariables.set('accessToken', jsonData.tokens.access_token);",
+                                    "    pm.collectionVariables.set('refreshToken', jsonData.tokens.refresh_token);",
+                                    "}",
+                                    "if (jsonData.user) {",
+                                    "    pm.collectionVariables.set('userId', jsonData.user.id);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"farmer@example.com\",\n    \"phone\": \"+256700123456\",\n    \"password\": \"Password123!\",\n    \"first_name\": \"John\",\n    \"last_name\": \"Mukasa\",\n    \"role\": \"farmer\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/register",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "register"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Login",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "var jsonData = pm.response.json();",
+                                    "if (jsonData.tokens) {",
+                                    "    pm.collectionVariables.set('accessToken', jsonData.tokens.access_token);",
+                                    "    pm.collectionVariables.set('refreshToken', jsonData.tokens.refresh_token);",
+                                    "}",
+                                    "if (jsonData.user) {",
+                                    "    pm.collectionVariables.set('userId', jsonData.user.id);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"identifier\": \"farmer@example.com\",\n    \"password\": \"Password123!\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "login"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Forgot Password",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "var jsonData = pm.response.json();",
+                                    "if (jsonData.token) {",
+                                    "    pm.collectionVariables.set('resetCode', jsonData.token);",
+                                    "    console.log('Reset code saved: ' + jsonData.token);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"identifier\": \"farmer@example.com\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/forgot-password",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "forgot-password"
+                            ]
+                        },
+                        "description": "Returns a 6-digit OTP code. The same code is sent to the email."
+                    }
+                },
+                {
+                    "name": "Reset Password",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"token\": \"{{resetCode}}\",\n    \"new_password\": \"NewPassword456!\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/reset-password",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "reset-password"
+                            ]
+                        },
+                        "description": "Use the 6-digit code from the forgot-password response or email."
+                    }
+                },
+                {
+                    "name": "Get Profile",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/me",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "me"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Profile",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"district\": \"Wakiso\",\n    \"farm_size\": 5.5,\n    \"language\": \"en\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/me",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "me"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Refresh Token",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "var jsonData = pm.response.json();",
+                                    "if (jsonData.tokens) {",
+                                    "    pm.collectionVariables.set('accessToken', jsonData.tokens.access_token);",
+                                    "    pm.collectionVariables.set('refreshToken', jsonData.tokens.refresh_token);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"refresh_token\": \"{{refreshToken}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/refresh",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "refresh"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Change Password",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"current_password\": \"Password123!\",\n    \"new_password\": \"NewPassword456!\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/change-password",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "change-password"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Logout",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"refresh_token\": \"{{refreshToken}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/logout",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "logout"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Assign Role (Admin)",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"role\": \"extension_officer\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/users/{{userId}}/role",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "users",
+                                "{{userId}}",
+                                "role"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Send Verification Email",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "var jsonData = pm.response.json();",
+                                    "if (jsonData.code) {",
+                                    "    pm.collectionVariables.set('verificationCode', jsonData.code);",
+                                    "    console.log('Verification code saved: ' + jsonData.code);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/send-verification",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "send-verification"
+                            ]
+                        },
+                        "description": "Send a 6-digit verification code to the authenticated user's email. Requires login first."
+                    }
+                },
+                {
+                    "name": "Verify Email",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"token\": \"{{verificationCode}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/verify-email",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "verify-email"
+                            ]
+                        },
+                        "description": "Verify email using the 6-digit code from send-verification response or email."
+                    }
+                },
+                {
+                    "name": "Resend Verification Email",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"identifier\": \"farmer@example.com\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/resend-verification",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "resend-verification"
+                            ]
+                        },
+                        "description": "Request a new verification email if the previous one expired."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Fields (JSON:API)",
+            "item": [
+                {
+                    "name": "List Fields",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/vnd.api+json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/fields",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "fields"
+                            ]
+                        },
+                        "description": "Returns JSON:API array of field resources"
+                    }
+                },
+                {
+                    "name": "Create Field",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "var jsonData = pm.response.json();",
+                                    "if (jsonData.data && jsonData.data.id) {",
+                                    "    pm.collectionVariables.set('fieldId', jsonData.data.id);",
+                                    "    console.log('Field ID saved: ' + jsonData.data.id);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/vnd.api+json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Main Farm\",\n    \"latitude\": 0.3476,\n    \"longitude\": 32.5825,\n    \"size_acres\": 2.5,\n    \"soil_type\": \"loam\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/fields",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "fields"
+                            ]
+                        },
+                        "description": "Response format:\n```json\n{\n  \"jsonapi\": {\"version\": \"1.1\"},\n  \"data\": {\n    \"type\": \"fields\",\n    \"id\": \"uuid\",\n    \"attributes\": {\n      \"name\": \"Main Farm\",\n      \"latitude\": 0.3476\n    },\n    \"links\": {\n      \"self\": \"/fields/uuid\"\n    }\n  }\n}\n```"
+                    }
+                },
+                {
+                    "name": "Get Field",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/vnd.api+json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/fields/{{fieldId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "fields",
+                                "{{fieldId}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Field",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/vnd.api+json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Updated Farm Name\",\n    \"size_acres\": 3.0\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/fields/{{fieldId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "fields",
+                                "{{fieldId}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Field",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/vnd.api+json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/fields/{{fieldId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "fields",
+                                "{{fieldId}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "List Crops by Field",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/vnd.api+json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/fields/{{fieldId}}/crops",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "fields",
+                                "{{fieldId}}",
+                                "crops"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Crops (JSON:API)",
+            "item": [
+                {
+                    "name": "List Crops",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/vnd.api+json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/crops",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "crops"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Crop",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "var jsonData = pm.response.json();",
+                                    "if (jsonData.data && jsonData.data.id) {",
+                                    "    pm.collectionVariables.set('cropId', jsonData.data.id);",
+                                    "    console.log('Crop ID saved: ' + jsonData.data.id);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/vnd.api+json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"field_id\": \"{{fieldId}}\",\n    \"crop_type\": \"maize\",\n    \"variety\": \"Longe 5\",\n    \"planting_date\": \"2026-01-15\",\n    \"expected_harvest\": \"2026-05-15\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/crops",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "crops"
+                            ]
+                        },
+                        "description": "Response includes relationship to field:\n```json\n{\n  \"data\": {\n    \"type\": \"crops\",\n    \"id\": \"uuid\",\n    \"attributes\": {...},\n    \"relationships\": {\n      \"field\": {\n        \"data\": {\"type\": \"fields\", \"id\": \"field-uuid\"}\n      }\n    }\n  }\n}\n```"
+                    }
+                },
+                {
+                    "name": "Get Crop",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/vnd.api+json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/crops/{{cropId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "crops",
+                                "{{cropId}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Crop Status",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/vnd.api+json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"status\": \"growing\",\n    \"variety\": \"Longe 6H\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/crops/{{cropId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "crops",
+                                "{{cropId}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Crop",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/vnd.api+json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/crops/{{cropId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "crops",
+                                "{{cropId}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "List Health Records for Crop",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/vnd.api+json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/crops/{{cropId}}/health-records",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "crops",
+                                "{{cropId}}",
+                                "health-records"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "List Treatments for Crop",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/vnd.api+json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/crops/{{cropId}}/treatments",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "crops",
+                                "{{cropId}}",
+                                "treatments"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Health Records (JSON:API)",
+            "item": [
+                {
+                    "name": "Create Health Record (Healthy)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/vnd.api+json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"crop_id\": \"{{cropId}}\",\n    \"health_score\": 85,\n    \"image_url\": \"https://storage.farmagent.ug/images/crop-check.jpg\",\n    \"notes\": \"Crop looks healthy, good leaf color\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/health-records",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "health-records"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Health Record (Disease Detected)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/vnd.api+json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"crop_id\": \"{{cropId}}\",\n    \"health_score\": 45,\n    \"image_url\": \"https://storage.farmagent.ug/images/disease-detected.jpg\",\n    \"disease_detected\": \"Fall Armyworm\",\n    \"confidence\": 0.92,\n    \"severity\": \"moderate\",\n    \"notes\": \"Worm damage on 30% of leaves\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/health-records",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "health-records"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Treatments (JSON:API)",
+            "item": [
+                {
+                    "name": "Create Treatment (Organic)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/vnd.api+json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"crop_id\": \"{{cropId}}\",\n    \"disease_name\": \"Fall Armyworm\",\n    \"treatment_name\": \"Neem Oil Spray\",\n    \"treatment_type\": \"organic\",\n    \"application_date\": \"2026-01-25\",\n    \"cost\": 25000,\n    \"notes\": \"Applied early morning\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/treatments",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "treatments"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Treatment (Chemical)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/vnd.api+json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"crop_id\": \"{{cropId}}\",\n    \"disease_name\": \"Fall Armyworm\",\n    \"treatment_name\": \"Ampligo 150ZC\",\n    \"treatment_type\": \"chemical\",\n    \"application_date\": \"2026-01-26\",\n    \"cost\": 45000,\n    \"notes\": \"Applied with protective gear\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/treatments",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "treatments"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Rate Treatment Effectiveness",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/vnd.api+json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"effectiveness\": 4,\n    \"notes\": \"Armyworm population reduced by 80%\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/treatments/<TREATMENT_ID>",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "treatments",
+                                "<TREATMENT_ID>"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Notifications",
+            "item": [
+                {
+                    "name": "Send Email",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"to\": \"farmer@example.com\",\n    \"subject\": \"Test Notification\",\n    \"template\": \"welcome\",\n    \"data\": {\n        \"name\": \"John Mukasa\"\n    }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/notifications/email",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "notifications",
+                                "email"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Send SMS",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"phone\": \"+256700123456\",\n    \"message\": \"Your crop health check is due. Open FarmAgent to scan your maize.\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/notifications/sms",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "notifications",
+                                "sms"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "AI",
+            "item": [
+                {
+                    "name": "Analyze Crop Image",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "file",
+                                    "type": "file",
+                                    "src": "/path/to/crop_image.jpg"
+                                },
+                                {
+                                    "key": "crop_type",
+                                    "value": "maize",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/ai/analyze",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "ai",
+                                "analyze"
+                            ]
+                        },
+                        "description": "Upload a crop image to detect diseases. Returns disease class, confidence, severity, and health score."
+                    }
+                },
+                {
+                    "name": "Analyze Image (Base64)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"image\": \"<base64_encoded_image>\",\n    \"crop_type\": \"tomato\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/ai/analyze/base64",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "ai",
+                                "analyze",
+                                "base64"
+                            ]
+                        },
+                        "description": "For mobile apps - analyze image using base64 encoding instead of file upload."
+                    }
+                },
+                {
+                    "name": "Get Treatment Recommendations",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"disease\": \"Late Blight\",\n    \"crop\": \"Tomato\",\n    \"severity\": \"moderate\",\n    \"location\": \"Kampala, Uganda\",\n    \"latitude\": 0.3476,\n    \"longitude\": 32.5825\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/ai/recommend",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "ai",
+                                "recommend"
+                            ]
+                        },
+                        "description": "Get organic and chemical treatment recommendations. Weather-specific advice included when coordinates provided."
+                    }
+                },
+                {
+                    "name": "Quick Recommendation",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/ai/recommend/quick/fall_armyworm/maize",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "ai",
+                                "recommend",
+                                "quick",
+                                "fall_armyworm",
+                                "maize"
+                            ]
+                        },
+                        "description": "Quick endpoint for simple disease/crop recommendations."
+                    }
+                },
+                {
+                    "name": "Chat with AI",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"message\": \"How do I protect my maize from Fall Armyworm?\",\n    \"context\": \"Farmer in Kampala with 2 acres of maize\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/ai/chat",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "ai",
+                                "chat"
+                            ]
+                        },
+                        "description": "Conversational AI for farming questions. Returns response with follow-up suggestions."
+                    }
+                },
+                {
+                    "name": "Get Chat Suggestions",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/ai/chat/suggestions",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "ai",
+                                "chat",
+                                "suggestions"
+                            ]
+                        },
+                        "description": "Get suggested questions to ask the AI."
+                    }
+                },
+                {
+                    "name": "List Detectable Diseases",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/ai/analyze/diseases",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "ai",
+                                "analyze",
+                                "diseases"
+                            ]
+                        },
+                        "description": "Get full list of detectable diseases organized by crop."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Health Checks",
+            "item": [
+                {
+                    "name": "Gateway Health",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/health",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "health"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Auth Service Health",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/health/auth",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "health",
+                                "auth"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Notification Service Health",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/health/notification",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "health",
+                                "notification"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Crop Service Health",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/health/crop",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "health",
+                                "crop"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Payment Service Health",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/health/payment",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "health",
+                                "payment"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "AI Service Health",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/health/ai",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "health",
+                                "ai"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Payments",
+            "item": [
+                {
+                    "name": "Initiate Payment",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "var jsonData = pm.response.json();",
+                                    "if (jsonData.transaction_id) {",
+                                    "    pm.collectionVariables.set('transactionId', jsonData.transaction_id);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"amount\": 5000,\n    \"phone\": \"256772000000\",\n    \"reason\": \"Test payment\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/payments/initiate",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "payments",
+                                "initiate"
+                            ]
+                        },
+                        "description": "Initiate MTN MoMo payment. User will receive USSD prompt."
+                    }
+                },
+                {
+                    "name": "Get Transaction Status",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/payments/{{transactionId}}/status",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "payments",
+                                "{{transactionId}}",
+                                "status"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Payment History",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/payments/history",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "payments",
+                                "history"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Subscriptions",
+            "item": [
+                {
+                    "name": "Get Plans",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/subscriptions/plans",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "subscriptions",
+                                "plans"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Current Subscription",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/subscriptions",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "subscriptions"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Subscribe to Plan",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"plan_id\": \"basic\",\n    \"phone\": \"256772000000\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/subscriptions/subscribe",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "subscriptions",
+                                "subscribe"
+                            ]
+                        },
+                        "description": "Subscribe to a plan. Plans: free, basic (5000 UGX), premium (20000 UGX)"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Weather",
+            "item": [
+                {
+                    "name": "Get Weather by Coordinates",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/ai/weather?latitude=0.3476&longitude=32.5825",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "ai",
+                                "weather"
+                            ],
+                            "query": [
+                                {
+                                    "key": "latitude",
+                                    "value": "0.3476"
+                                },
+                                {
+                                    "key": "longitude",
+                                    "value": "32.5825"
+                                }
+                            ]
+                        },
+                        "description": "Get weather with farming advisories for any location"
+                    }
+                },
+                {
+                    "name": "Get Weather by Region",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/ai/weather/region/kampala",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "ai",
+                                "weather",
+                                "region",
+                                "kampala"
+                            ]
+                        },
+                        "description": "Regions: kampala, mbarara, gulu, jinja, mbale, fort_portal, soroti, lira"
+                    }
+                },
+                {
+                    "name": "List Uganda Regions",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/ai/weather/regions",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "ai",
+                                "weather",
+                                "regions"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Spray Safety Check",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/ai/spray-check?latitude=0.3476&longitude=32.5825",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "ai",
+                                "spray-check"
+                            ],
+                            "query": [
+                                {
+                                    "key": "latitude",
+                                    "value": "0.3476"
+                                },
+                                {
+                                    "key": "longitude",
+                                    "value": "32.5825"
+                                }
+                            ]
+                        },
+                        "description": "Quick check: Is it safe to spray pesticides/fertilizers?"
+                    }
+                }
+            ]
+        }
+    ]
+}

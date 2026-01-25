@@ -1,0 +1,99 @@
+version: '3.8'
+
+services:
+  # ===== Notification Service =====
+  notification-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8003:8003"
+    environment:
+      - APP_ENV=development
+      - APP_PORT=8003
+      - MONGO_URI=mongodb://mongodb:27017
+      - MONGO_DB=farmagent_notifications
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - SMTP_HOST=mailpit
+      - SMTP_PORT=1025
+      - SMTP_FROM=noreply@farmagent.ug
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    networks:
+      - farmagent-network
+
+  # ===== MongoDB =====
+  mongodb:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - farmagent-network
+
+  # ===== Redis =====
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - farmagent-network
+
+  # ===== RabbitMQ =====
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    ports:
+      - "5672:5672"   # AMQP
+      - "15672:15672" # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - farmagent-network
+
+  # ===== Mailpit (Email Testing) =====
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI
+    networks:
+      - farmagent-network
+
+volumes:
+  mongodb_data:
+  redis_data:
+  rabbitmq_data:
+
+networks:
+  farmagent-network:
+    driver: bridge

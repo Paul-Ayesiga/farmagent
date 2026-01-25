@@ -1,0 +1,274 @@
+# FarmAgent - Full Stack Development Environment
+
+services:
+  # ===== Databases =====
+  
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: farmagent
+      POSTGRES_PASSWORD: farmagent_secret
+      POSTGRES_DB: farmagent_auth
+      POSTGRES_MULTIPLE_DATABASES: farmagent_crop,farmagent_payments
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    command: >
+      bash -c "
+        docker-entrypoint.sh postgres &
+        sleep 5
+        until pg_isready -U farmagent; do sleep 1; done
+        psql -U farmagent -d farmagent_auth -c 'CREATE DATABASE farmagent_crop;' 2>/dev/null || true
+        psql -U farmagent -d farmagent_auth -c 'CREATE DATABASE farmagent_payments;' 2>/dev/null || true
+        wait
+      "
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U farmagent"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - farmagent-network
+
+  mongodb:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - farmagent-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - farmagent-network
+
+  # ===== Message Broker =====
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    ports:
+      - "5672:5672"   # AMQP
+      - "15672:15672" # Management UI (guest:guest)
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - farmagent-network
+
+  # ===== Email Testing =====
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI
+    networks:
+      - farmagent-network
+
+  # ===== Translation Service =====
+
+  libretranslate:
+    image: libretranslate/libretranslate:latest
+    ports:
+      - "5050:5000"
+    environment:
+      - LT_LOAD_ONLY=en,fr,de,es,pt  # Available languages
+      - LT_SUGGESTIONS=false
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/languages"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    networks:
+      - farmagent-network
+
+  # ===== Services =====
+
+  api-gateway:
+    build:
+      context: ./fa-api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=development
+      - APP_PORT=8000
+      - JWT_SECRET=dev-secret-change-in-production
+      - AUTH_SERVICE_URL=http://auth-service:8001
+      - NOTIFICATION_SERVICE_URL=http://notification-service:8003
+      - CROP_SERVICE_URL=http://crop-service:8002
+      - PAYMENT_SERVICE_URL=http://payment-service:8004
+      - AI_SERVICE_URL=http://ai-service:8005
+      - RATE_LIMIT_REQUESTS=100
+      - RATE_LIMIT_WINDOW=60
+    depends_on:
+      - auth-service
+      - notification-service
+    networks:
+      - farmagent-network
+
+  auth-service:
+    build:
+      context: ./fa-auth-service
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      - APP_ENV=development
+      - APP_PORT=8001
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=farmagent
+      - DB_PASSWORD=farmagent_secret
+      - DB_NAME=farmagent_auth
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - JWT_SECRET=dev-secret-change-in-production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - farmagent-network
+
+  crop-service:
+    build:
+      context: ./fa-crop-service
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8002"
+    environment:
+      - APP_ENV=development
+      - APP_PORT=8002
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=farmagent
+      - DB_PASSWORD=farmagent_secret
+      - DB_NAME=farmagent_crop
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - farmagent-network
+
+  notification-service:
+    build:
+      context: ./fa-notification-service
+      dockerfile: Dockerfile
+    ports:
+      - "8003:8003"
+    environment:
+      - APP_ENV=development
+      - APP_PORT=8003
+      - MONGO_URI=mongodb://mongodb:27017
+      - MONGO_DB=farmagent_notifications
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - SMTP_HOST=mailpit
+      - SMTP_PORT=1025
+      - SMTP_FROM=noreply@farmagent.ug
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    networks:
+      - farmagent-network
+
+  ai-service:
+    build:
+      context: ./fa-ai-service
+      dockerfile: Dockerfile
+    ports:
+      - "8005:8005"
+    environment:
+      - APP_ENV=development
+      - APP_PORT=8005
+      - OLLAMA_HOST=http://host.docker.internal:11434
+      - OLLAMA_MODEL=llama3.2:3b
+      - OLLAMA_VISION_MODEL=llava:7b
+      - MODEL_PATH=./models/disease_classifier.h5
+      - CONFIDENCE_THRESHOLD=0.7
+      - LIBRETRANSLATE_URL=http://libretranslate:5000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      libretranslate:
+        condition: service_started
+    networks:
+      - farmagent-network
+
+  payment-service:
+    build:
+      context: ./fa-payment-service
+      dockerfile: Dockerfile
+    ports:
+      - "8004:8004"
+    environment:
+      - APP_ENV=development
+      - APP_PORT=8004
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=farmagent
+      - DB_PASSWORD=farmagent_secret
+      - DB_NAME=farmagent_payments
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - MTN_ENVIRONMENT=sandbox
+      - MTN_BASE_URL=https://sandbox.momodeveloper.mtn.com
+      - MTN_SUBSCRIPTION_KEY=${MTN_SUBSCRIPTION_KEY:-}
+      - MTN_API_USER=${MTN_API_USER:-}
+      - MTN_API_KEY=${MTN_API_KEY:-}
+      - MTN_CALLBACK_URL=${MTN_CALLBACK_URL:-http://localhost:8004/api/v1/payments/callback}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - farmagent-network
+
+volumes:
+  postgres_data:
+  mongodb_data:
+  redis_data:
+  rabbitmq_data:
+
+networks:
+  farmagent-network:
+    driver: bridge
+
+
